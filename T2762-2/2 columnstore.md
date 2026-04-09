@@ -102,7 +102,7 @@ GO
 
 ## Step 2: Create the table
 
-Run the following command:
+Run the following command, which will take about two minutes:
 
 ```sql
 SELECT *
@@ -380,9 +380,9 @@ Write down the current level.
 Re-run this query and inspect the actual execution plan:
 
 ```sql
-SELECT CustomerKey, SUM(SalesAmount) AS TotalSales
-FROM dbo.FactResellerSalesXL_CCI
-GROUP BY CustomerKey;
+SELECT Productkey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL
+GROUP BY Productkey;
 GO
 ```
 
@@ -401,7 +401,7 @@ Look in the execution plan properties for signs of:
 Example:
 
 ```sql
-ALTER DATABASE AdventureWorksDW2016_EXT SET COMPATIBILITY_LEVEL = 120;
+ALTER DATABASE CURRENT SET COMPATIBILITY_LEVEL = 120;
 GO
 ```
 
@@ -410,7 +410,7 @@ Then re-run the same query and inspect the plan again.
 After that, try a higher level:
 
 ```sql
-ALTER DATABASE AdventureWorksDW2016_EXT SET COMPATIBILITY_LEVEL = 150;
+ALTER DATABASE CURRENT SET COMPATIBILITY_LEVEL = 150;
 GO
 ```
 
@@ -438,31 +438,10 @@ Compare:
 
 ---
 
-# 🧪 Part 9: Optional Test with a Rowstore Table
-
-If your SQL Server version supports it, you can test whether a rowstore table may also benefit from newer optimizer behavior under higher compatibility levels.
-
-Run this query against the uncompressed table:
-
-```sql
-SELECT CustomerKey, SUM(SalesAmount) AS TotalSales
-FROM dbo.FactResellerSalesXL
-GROUP BY CustomerKey;
-GO
-```
-
-Inspect the actual execution plan at different compatibility levels.
-
-## Questions
-
-1. Does the rowstore plan change?
-2. Do you see batch mode on rowstore?
-3. If yes, at which compatibility level?
-4. If not, what does that suggest about SQL Server version or optimizer features?
 
 ---
 
-# 🧪 Part 10: Clean Up Statistics Output
+# 🧪 Part 9: Clean Up Statistics Output
 
 When finished, turn off statistics:
 
