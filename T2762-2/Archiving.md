@@ -32,9 +32,6 @@ You are working with a table that stores **orders**.
 ```sql
 USE tempdb;
 
-DROP PARTITION SCHEME IF EXISTS psOrders;
-DROP PARTITION FUNCTION IF EXISTS pfOrders;
-
 CREATE PARTITION FUNCTION pfOrders (DATE)
 AS RANGE RIGHT FOR VALUES 
 (
@@ -61,14 +58,17 @@ ALL TO ([PRIMARY]); -- keep it simple
 
 ```sql
 DROP TABLE IF EXISTS Orders;
+GO
 
 CREATE TABLE Orders
 (
-    OrderID INT IDENTITY PRIMARY KEY,
+    OrderID INT IDENTITY(1,1) NOT NULL,
     OrderDate DATE NOT NULL,
-    Amount INT
+    Amount INT NOT NULL,
+    CONSTRAINT PK_Orders PRIMARY KEY (OrderDate, OrderID)
 )
 ON psOrders(OrderDate);
+GO
 ```
 
 ---
@@ -140,13 +140,16 @@ WHERE OrderDate < '2024-01-01';
 
 ```sql
 DROP TABLE IF EXISTS Orders_Staging;
+GO
 
 CREATE TABLE Orders_Staging
 (
-    OrderID INT,
-    OrderDate DATE,
-    Amount INT
+    OrderID INT NOT NULL,
+    OrderDate DATE NOT NULL,
+    Amount INT NOT NULL,
+    CONSTRAINT PK_Orders_Staging PRIMARY KEY CLUSTERED (OrderDate, OrderID)
 );
+GO
 ```
 
 ---
