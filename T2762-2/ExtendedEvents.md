@@ -281,30 +281,4 @@ Ask:
 
 ---
 
-# 🎯 Vad som förbättrades
 
-### Från admin → utvecklare
-
-| Före             | Efter                  |
-| ---------------- | ---------------------- |
-| Failed logins    | Runtime errors         |
-| “Track events”   | “Improve your code”    |
-| Teknikfokus      | Problemlösning         |
-| Serverperspektiv | Applikationsperspektiv |
-
----
-
-# 💡 Extra (om du vill lyfta nivån lite)
-
-Du kan lägga till en sista fråga efter varje övning:
-
-> “Hur skulle du fixa detta i riktig kod?”
-
-Det gör enorm skillnad pedagogiskt.
-
----
-
-Vill du kan jag även:
-
-* lägga till **facit / diskussionspunkter**
-* eller göra en **lab med execution plans + XE tillsammans** (väldigt kraftfullt i kurs)
