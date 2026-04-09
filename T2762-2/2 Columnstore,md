@@ -1,0 +1,99 @@
+# SQL Server Lab: Comparing Rowstore, Page Compression, and Columnstore
+
+## 📘 Overview
+
+In this lab, you will compare three versions of the same reseller sales data in **AdventureWorksDW**:
+
+- `dbo.FactResellerSalesXL`  
+  A **new uncompressed rowstore table** that you will create in this lab.
+
+- `dbo.FactResellerSalesXL_PageCompressed`  
+  A **rowstore table with PAGE compression**.
+
+- `dbo.FactResellerSalesXL_CCI`  
+  A table stored with a **Clustered Columnstore Index (CCI)**.
+
+You will measure differences in:
+
+- elapsed time
+- logical reads
+- CPU time
+- execution plans
+
+You will also see how **database compatibility level** can affect whether SQL Server uses **batch mode**, which can make a major difference for analytical queries.
+
+---
+
+# 🎯 Learning Goals
+
+After completing this lab, you should be able to:
+
+- explain the difference between rowstore, compressed rowstore, and columnstore
+- create an uncompressed copy of an existing table
+- compare query performance using `SET STATISTICS IO` and `SET STATISTICS TIME`
+- inspect execution plans
+- understand why **batch mode** may depend on compatibility level
+
+---
+
+# 🧠 Background
+
+## 1. `FactResellerSalesXL`
+This table does **not** exist by default in the sample database.  
+You will create it yourself by copying data from the compressed table.
+
+After using `SELECT INTO`, the new table will typically be:
+
+- a **heap**
+- **uncompressed**
+- without the indexes of the source table
+
+This gives you a useful **baseline** for comparison.
+
+---
+
+## 2. `FactResellerSalesXL_PageCompressed`
+This table stores the same large dataset in **row format**, but with **PAGE compression**.
+
+PAGE compression can:
+
+- reduce storage
+- reduce I/O
+- improve some scan-heavy workloads
+
+However, it is still a **rowstore** table.
+
+---
+
+## 3. `FactResellerSalesXL_CCI`
+This table uses a **Clustered Columnstore Index**.
+
+That means:
+
+- data is stored **by column**
+- compression is usually very high
+- analytical queries can be much faster
+- SQL Server may use **batch mode**, which processes many rows at a time
+
+This is often the best format for large reporting and data warehouse queries.
+
+---
+
+# ⚠️ Before You Start
+
+This lab assumes that your database already contains:
+
+- `dbo.FactResellerSalesXL_PageCompressed`
+- `dbo.FactResellerSalesXL_CCI`
+
+These are typically found in the extended AdventureWorksDW sample database.
+
+---
+
+# 🧪 Part 1: Create an Uncompressed Baseline Table
+
+## Step 1: Drop the table if it already exists
+
+```sql
+DROP TABLE IF EXISTS dbo.FactResellerSalesXL;
+GO
