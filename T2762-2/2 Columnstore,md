@@ -1,4 +1,4 @@
-# SQL Server Lab: Comparing Rowstore, Page Compression, and Columnstore
+
 
 ## 📘 Overview
 
@@ -97,3 +97,445 @@ These are typically found in the extended AdventureWorksDW sample database.
 ```sql
 DROP TABLE IF EXISTS dbo.FactResellerSalesXL;
 GO
+````
+
+## Step 2: Create the table
+
+Run the following command:
+
+```sql
+SELECT *
+INTO dbo.FactResellerSalesXL
+FROM dbo.FactResellerSalesXL_PageCompressed;
+GO
+```
+
+## What happened?
+
+You have now created a new table:
+
+* with the same rows as `FactResellerSalesXL_PageCompressed`
+* but **without PAGE compression**
+* and without the original indexes
+
+This gives you a simple **uncompressed rowstore version** for comparison.
+
+---
+
+# 🧪 Part 2: Verify the Three Tables
+
+Run:
+
+```sql
+EXEC sp_spaceused 'dbo.FactResellerSalesXL';
+EXEC sp_spaceused 'dbo.FactResellerSalesXL_PageCompressed';
+EXEC sp_spaceused 'dbo.FactResellerSalesXL_CCI';
+GO
+```
+
+## Questions
+
+1. Which table uses the most space?
+2. Which table uses the least space?
+3. Is the page-compressed table smaller than the uncompressed rowstore table?
+4. Is the columnstore table the most compressed?
+
+---
+
+# 🧪 Part 3: Turn On Performance Statistics
+
+Run:
+
+```sql
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+GO
+```
+
+You will now see:
+
+* **logical reads**
+* **CPU time**
+* **elapsed time**
+
+in the Messages tab.
+
+---
+
+# 🧪 Part 4: Compare a Simple Aggregate Query
+
+## Query A: Uncompressed rowstore
+
+```sql
+SELECT SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL;
+GO
+```
+
+## Query B: Page-compressed rowstore
+
+```sql
+SELECT SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_PageCompressed;
+GO
+```
+
+## Query C: Columnstore
+
+```sql
+SELECT SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_CCI;
+GO
+```
+
+---
+
+## ✅ Observe
+
+For each query, note:
+
+* logical reads
+* CPU time
+* elapsed time
+
+## Questions
+
+1. Which table was fastest?
+2. Which table required the fewest logical reads?
+3. Did PAGE compression improve performance compared with the uncompressed table?
+4. Was columnstore clearly faster for this aggregation?
+
+---
+
+# 🧪 Part 5: Compare a Grouped Aggregation
+
+This kind of query is common in reporting.
+
+## Query A: Uncompressed rowstore
+
+```sql
+SELECT OrderDateKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL
+GROUP BY OrderDateKey
+ORDER BY OrderDateKey;
+GO
+```
+
+## Query B: Page-compressed rowstore
+
+```sql
+SELECT OrderDateKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_PageCompressed
+GROUP BY OrderDateKey
+ORDER BY OrderDateKey;
+GO
+```
+
+## Query C: Columnstore
+
+```sql
+SELECT OrderDateKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_CCI
+GROUP BY OrderDateKey
+ORDER BY OrderDateKey;
+GO
+```
+
+---
+
+## ✅ Observe
+
+Again, compare:
+
+* logical reads
+* CPU time
+* elapsed time
+
+## Questions
+
+1. Did the ranking change compared with the previous test?
+2. Which storage format seems best for analytical queries?
+3. Why might grouping benefit more from columnstore than row-by-row processing?
+
+---
+
+# 🧪 Part 6: Inspect the Execution Plans
+
+## Step 1: Enable the actual execution plan
+
+In SSMS, click:
+
+**Query** → **Include Actual Execution Plan**
+
+or press:
+
+**Ctrl + M**
+
+Then re-run the three grouped queries from Part 5.
+
+---
+
+## Step 2: Compare the plans
+
+Look for differences such as:
+
+* **Table Scan / Clustered Index Scan / Columnstore Scan**
+* estimated cost distribution
+* row mode vs batch mode
+* memory grant
+* parallelism
+
+---
+
+## Questions
+
+1. What physical operator is used to read the rowstore table?
+2. What operator is used to read the columnstore table?
+3. Do you see **Batch Mode** anywhere in the plan properties?
+4. Does the columnstore plan look simpler or more efficient?
+
+---
+
+# 🧪 Part 7: A More Selective Query
+
+Now try a query that still scans a lot of data, but includes filtering.
+
+## Query A: Uncompressed rowstore
+
+```sql
+SELECT ProductKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL
+WHERE OrderDateKey >= 20130101
+GROUP BY ProductKey
+ORDER BY TotalSales DESC;
+GO
+```
+
+## Query B: Page-compressed rowstore
+
+```sql
+SELECT ProductKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_PageCompressed
+WHERE OrderDateKey >= 20130101
+GROUP BY ProductKey
+ORDER BY TotalSales DESC;
+GO
+```
+
+## Query C: Columnstore
+
+```sql
+SELECT ProductKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_CCI
+WHERE OrderDateKey >= 20130101
+GROUP BY ProductKey
+ORDER BY TotalSales DESC;
+GO
+```
+
+---
+
+## Questions
+
+1. Which table performs best now?
+2. Does columnstore still have a strong advantage?
+3. How much do reads and CPU differ?
+
+---
+
+# 🧪 Part 8: Compatibility Level and Batch Mode
+
+## Why this matters
+
+For analytical queries, **batch mode** can be one of the biggest reasons columnstore performs so well.
+
+In some SQL Server versions and scenarios, **database compatibility level** affects whether SQL Server can use:
+
+* modern optimizer behavior
+* batch mode improvements
+* better plan choices
+
+So the same query can behave differently depending on compatibility level.
+
+---
+
+## Step 1: Check current compatibility level
+
+Run:
+
+```sql
+SELECT name, compatibility_level
+FROM sys.databases
+WHERE name = DB_NAME();
+GO
+```
+
+Write down the current level.
+
+---
+
+## Step 2: Test the current behavior
+
+Re-run this query and inspect the actual execution plan:
+
+```sql
+SELECT CustomerKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL_CCI
+GROUP BY CustomerKey;
+GO
+```
+
+Look in the execution plan properties for signs of:
+
+* **Batch Mode**
+* parallel execution
+* columnstore scan
+
+---
+
+## Step 3: Change compatibility level
+
+> Note: Your instructor may tell you which levels are appropriate to test.
+
+Example:
+
+```sql
+ALTER DATABASE AdventureWorksDW2016_EXT SET COMPATIBILITY_LEVEL = 120;
+GO
+```
+
+Then re-run the same query and inspect the plan again.
+
+After that, try a higher level:
+
+```sql
+ALTER DATABASE AdventureWorksDW2016_EXT SET COMPATIBILITY_LEVEL = 150;
+GO
+```
+
+Re-run the query once more.
+
+---
+
+## ✅ Observe
+
+Compare:
+
+* execution plan shape
+* batch mode vs row mode
+* CPU time
+* elapsed time
+
+---
+
+## Questions
+
+1. Did the execution plan change when compatibility level changed?
+2. Was batch mode used at all levels?
+3. Did performance improve at a higher compatibility level?
+4. Why can compatibility level be important even when the data is the same?
+
+---
+
+# 🧪 Part 9: Optional Test with a Rowstore Table
+
+If your SQL Server version supports it, you can test whether a rowstore table may also benefit from newer optimizer behavior under higher compatibility levels.
+
+Run this query against the uncompressed table:
+
+```sql
+SELECT CustomerKey, SUM(SalesAmount) AS TotalSales
+FROM dbo.FactResellerSalesXL
+GROUP BY CustomerKey;
+GO
+```
+
+Inspect the actual execution plan at different compatibility levels.
+
+## Questions
+
+1. Does the rowstore plan change?
+2. Do you see batch mode on rowstore?
+3. If yes, at which compatibility level?
+4. If not, what does that suggest about SQL Server version or optimizer features?
+
+---
+
+# 🧪 Part 10: Clean Up Statistics Output
+
+When finished, turn off statistics:
+
+```sql
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO
+```
+
+---
+
+# 📝 Summary Questions
+
+1. What is the main difference between rowstore and columnstore storage?
+2. Why is `FactResellerSalesXL` a useful baseline table?
+3. How did PAGE compression affect space usage and performance?
+4. Which table was best for aggregation queries?
+5. What role did execution plans play in understanding performance?
+6. Why can compatibility level affect batch mode and performance?
+
+---
+
+# 💡 Key Takeaways
+
+* `SELECT INTO` is a simple way to create an **uncompressed baseline copy**.
+* PAGE compression can reduce storage and sometimes improve scan performance.
+* Columnstore is usually best for **large analytical queries**.
+* `SET STATISTICS IO` and `SET STATISTICS TIME` help measure real differences.
+* Execution plans show **how** SQL Server actually processes your query.
+* Compatibility level can strongly influence whether SQL Server uses modern optimization features such as **batch mode**.
+
+---
+
+# 🔎 Suggested Instructor Notes
+
+## Expected observations
+
+In many environments, students should see:
+
+* `FactResellerSalesXL`
+  slowest or close to slowest, highest reads/storage
+
+* `FactResellerSalesXL_PageCompressed`
+  somewhat better than uncompressed rowstore
+
+* `FactResellerSalesXL_CCI`
+  best for large scan + aggregate queries
+
+## Important reminder
+
+Exact results vary depending on:
+
+* SQL Server version
+* compatibility level
+* available memory
+* parallelism settings
+* whether data is already cached
+
+So students should compare **patterns**, not expect identical timings.
+
+---
+
+# 🚀 Optional Extension
+
+If time permits, repeat the tests with:
+
+* `COUNT(*)`
+* `AVG(SalesAmount)`
+* a query with more grouping columns
+* a query with a restrictive predicate
+
+Then discuss:
+
+> When is columnstore ideal, and when might rowstore still be preferable?
+
+```
+```
