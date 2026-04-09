@@ -27,6 +27,72 @@ This lab requires a database that already supports memory-optimized tables.
 
 👉 If the setup is already done by the instructor, you can skip any configuration.
 
+
+
+---
+
+````md
+## 🧪 Create a Database for Memory-Optimized Tables
+
+Before starting the lab, create a database that supports memory-optimized tables.
+
+> Make sure the folder `C:\Data` exists on your server.
+
+---
+
+### Step 1: Create the database
+
+```sql
+CREATE DATABASE InMemoryLab
+ON 
+PRIMARY 
+(
+    NAME = InMemoryLab_data,
+    FILENAME = 'C:\Data\InMemoryLab_data.mdf'
+),
+FILEGROUP InMemoryLab_mod CONTAINS MEMORY_OPTIMIZED_DATA
+(
+    NAME = InMemoryLab_mod,
+    FILENAME = 'C:\Data\InMemoryLab_mod'
+)
+LOG ON 
+(
+    NAME = InMemoryLab_log,
+    FILENAME = 'C:\Data\InMemoryLab_log.ldf'
+);
+GO
+````
+
+---
+
+### Step 2: Use the database
+
+```sql
+USE InMemoryLab;
+GO
+```
+
+---
+
+### Step 3: Verify setup
+
+```sql
+SELECT name, type_desc
+FROM sys.filegroups;
+GO
+```
+
+You should see a filegroup with:
+
+* `MEMORY_OPTIMIZED_DATA_FILEGROUP`
+
+---
+
+
+
+
+
+
 ---
 
 # 🧪 Step 1: Create the Tables
