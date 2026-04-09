@@ -62,6 +62,7 @@ GO
 ## Disk-based table
 
 ```sql
+DROP TABLE IF EXISTS dbo.DiskBasedOrders
 CREATE TABLE dbo.DiskBasedOrders
 (
     OrderID    INT IDENTITY PRIMARY KEY,
@@ -77,6 +78,7 @@ GO
 ## Memory-optimized table
 
 ```sql
+DROP TABLE IF EXISTS dbo.InMemoryOrders
 CREATE TABLE dbo.InMemoryOrders
 (
     OrderID    INT IDENTITY NOT NULL,
@@ -103,7 +105,7 @@ GO
 DECLARE @start DATETIME2 = SYSDATETIME();
 
 DECLARE @i INT = 1;
-WHILE @i <= 100000
+WHILE @i <= 50000
 BEGIN
     INSERT INTO dbo.DiskBasedOrders (CustomerID, Amount)
     VALUES (@i % 1000, RAND() * 1000);
@@ -125,7 +127,7 @@ GO
 DECLARE @start DATETIME2 = SYSDATETIME();
 
 DECLARE @i INT = 1;
-WHILE @i <= 100000
+WHILE @i <= 50000
 BEGIN
     INSERT INTO dbo.InMemoryOrders (CustomerID, Amount)
     VALUES (@i % 1000, RAND() * 1000);
@@ -191,14 +193,7 @@ GO
 
 ---
 
-# 🧪 Step 5: Repeat the Test
 
-Run the INSERT test again after deleting all rows.
-
-## ❓ Questions
-
-* Do you get the same results?
-* Why might results vary?
 
 ---
 
@@ -235,7 +230,7 @@ GO
 ```sql
 DECLARE @start DATETIME2 = SYSDATETIME();
 
-EXEC dbo.usp_InsertInMemory @Iterations = 100000;
+EXEC dbo.usp_InsertInMemory @Iterations = 50000;
 
 SELECT 
     'Native Compiled' AS Operation,
@@ -268,20 +263,4 @@ GO
 
 ```
 
----
 
-# 🎯 Vad som förbättrades
-
-- ✔ Enhetlig stil  
-- ✔ Tydliga steg  
-- ✔ Inga “svenska hopp mitt i”  
-- ✔ Delete-test tillagt (bra idé!)  
-- ✔ Stabil kod (inga variabler som lever kvar mellan batcher)  
-- ✔ Pedagogiska frågor  
-
----
-
-Vill du kan jag också:
-- lägga till en **concurrency-del som verkligen visar skillnad**
-- eller göra en **instruktörsversion med facit / förväntade resultat** 👍
-```
