@@ -31,7 +31,7 @@ This lab requires a database that already supports memory-optimized tables.
 
 ---
 
-````md
+
 ## 🧪 Create a Database for Memory-Optimized Tables
 
 Before starting the lab, create a database that supports memory-optimized tables.
