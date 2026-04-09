@@ -213,6 +213,20 @@ This is where **Full-Text Search** is useful.
 
 To keep things very easy, let us use product descriptions instead of real files.
 
+## Install Full-Text Search in SQL Server
+
+Run SQL Server Setup again:
+
+1. Open **SQL Server Installation Center** SETUP.EXE in C:\Sqlinstall\SQLServer2019-DEV-x64-ENU
+
+2. Select:
+   ➜ **New SQL Server stand-alone installation or add features to an existing instance** 
+   
+3. Check the option:
+   - ✅ **Full-Text and Semantic Extractions for Search**
+   
+4. Click **Install** and complete the setup
+
 Create a table:
 
 ```sql
@@ -293,19 +307,18 @@ It searches for rows related to the meaning of the word, not only exact matches.
 
 ---
 
-# Part 13 – Search using FREETEXTTABLE
+# Part 13 – Search using CONTAINSTABLE
 
 This gives ranking information.
 
 ```sql
-SELECT
-    n.NoteID,
-    n.ProductID,
-    n.NoteText,
-    ft.[RANK]
-FROM FREETEXTTABLE(ProductNotes, NoteText, 'performance') AS ft
-INNER JOIN ProductNotes AS n
-    ON n.NoteID = ft.[KEY]
+SELECT n.NoteID, n.ProductID, n.NoteText, ft.[RANK]
+FROM CONTAINSTABLE(
+    ProductNotes,
+    NoteText,
+    'ISABOUT(performance WEIGHT(0.8), bike WEIGHT(0.2))'
+) ft
+JOIN ProductNotes n ON n.NoteID = ft.[KEY]
 ORDER BY ft.[RANK] DESC;
 ```
 
@@ -315,64 +328,3 @@ Higher rank usually means a better match.
 
 ---
 
-# Part 14 – Exercises
-
-## Exercise 1
-Create a new product and add a related document row.
-
-## Exercise 2
-Add two more rows to `ProductNotes`.
-Use words such as:
-- performance
-- safety
-- speed
-
-Then run the full-text queries again.
-
-## Exercise 3
-Discuss this question:
-Should the system store the whole file in the database, or only the file path?
-
-Write down one advantage and one disadvantage of each approach.
-
-## Exercise 4
-Look at the `ProductDocuments` table design.
-What extra columns might be useful?
-
-Examples:
-- FileSize
-- UploadedDate
-- UploadedBy
-
----
-
-# Part 15 – Summary
-
-In this lab, you have learned that:
-- BLOB data means large binary objects such as documents and images
-- relational tables can store information about files
-- FILESTREAM is used for large binary data in SQL Server
-- Full-Text Search can search inside text content
-- Full-Text Search can also rank search results
-
----
-
-# Instructor notes
-
-This lab is intentionally simple.
-
-The purpose is not to build a production-ready file solution.
-The purpose is to help students understand the three main ideas:
-
-1. **BLOB data**
-   - files connected to database rows
-
-2. **FILESTREAM**
-   - special handling for large binary files
-
-3. **Full-Text Search**
-   - searching inside text content
-
-A good classroom discussion question is:
-
-> If you were designing a product database with manuals, photos, and videos, what would you store in tables, and what would you store outside the database?
