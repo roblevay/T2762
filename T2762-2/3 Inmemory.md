@@ -1,46 +1,35 @@
-# SQL Server Lab: Memory-Optimized vs Disk-Based Tables (Simple Version)
+
+# SQL Server Lab: Memory-Optimized vs Disk-Based Tables
 
 ## 📘 Overview
 
 In this lab, you will compare:
 
-- a **normal disk-based table**
+- a **disk-based table**
 - a **memory-optimized table**
 
-You will:
+You will measure:
 
-- insert data into both tables
-- run simple queries
-- compare performance
+- insert performance
+- delete performance
+- (optional) native compiled procedure performance
 
 ---
 
 # 🎯 Goal
 
-Understand when a memory-optimized table can be faster than a traditional table.
+Understand when memory-optimized tables can provide performance benefits — and when they do not.
 
 ---
 
 # ⚠️ Before You Start
 
-This lab requires a database that already supports memory-optimized tables.
-
-👉 If the setup is already done by the instructor, you can skip any configuration.
-
-
+- Make sure the folder `C:\Data` exists
+- You need permission to create databases and filegroups
 
 ---
 
-
-## 🧪 Create a Database for Memory-Optimized Tables
-
-Before starting the lab, create a database that supports memory-optimized tables.
-
-> Make sure the folder `C:\Data` exists on your server.
-
----
-
-### Step 1: Create the database
+# 🧪 Step 1: Create the Database
 
 ```sql
 CREATE DATABASE InMemoryLab
@@ -61,43 +50,35 @@ LOG ON
     FILENAME = 'C:\Data\InMemoryLab_log.ldf'
 );
 GO
+
+USE InMemoryLab;
+GO
 ````
 
 ---
 
-### Step 2: Use the database
+# 🧪 Step 2: Create the Tables
+
+## Disk-based table
 
 ```sql
-USE InMemoryLab;
+CREATE TABLE dbo.DiskBasedOrders
+(
+    OrderID    INT IDENTITY PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    Amount     DECIMAL(10,2) NOT NULL,
+    OrderDate  DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+);
 GO
 ```
 
 ---
 
-1. Skapa testmiljön
+## Memory-optimized table
 
--- Aktivera In-Memory OLTP på databasen
-ALTER DATABASE YourDB 
-ADD FILEGROUP imoltp_fg CONTAINS MEMORY_OPTIMIZED_DATA;
-
-ALTER DATABASE YourDB 
-ADD FILE (NAME='imoltp', FILENAME='C:\Data\imoltp') 
-TO FILEGROUP imoltp_fg;
-
-
-2. Skapa en diskbaserad tabell
-
-CREATE TABLE dbo.DiskBasedOrders (
-    OrderID   INT IDENTITY PRIMARY KEY,
-    CustomerID INT NOT NULL,
-    Amount    DECIMAL(10,2) NOT NULL,
-    OrderDate DATETIME2 NOT NULL DEFAULT SYSDATETIME()
-);
-
-
-3. Skapa en minnesoptimerad tabell (samma struktur)
-
-CREATE TABLE dbo.InMemoryOrders (
+```sql
+CREATE TABLE dbo.InMemoryOrders
+(
     OrderID    INT IDENTITY NOT NULL,
     CustomerID INT NOT NULL,
     Amount     DECIMAL(10,2) NOT NULL,
@@ -107,13 +88,18 @@ CREATE TABLE dbo.InMemoryOrders (
 )
 WITH (
     MEMORY_OPTIMIZED = ON,
-    DURABILITY = SCHEMA_AND_DATA  -- eller SCHEMA_ONLY för max hastighet
+    DURABILITY = SCHEMA_AND_DATA
 );
+GO
+```
 
+---
 
-4. Mät INSERT-prestanda
+# 🧪 Step 3: Measure INSERT Performance
 
--- Diskbaserad
+## Disk-based table
+
+```sql
 DECLARE @start DATETIME2 = SYSDATETIME();
 
 DECLARE @i INT = 1;
@@ -121,50 +107,181 @@ WHILE @i <= 100000
 BEGIN
     INSERT INTO dbo.DiskBasedOrders (CustomerID, Amount)
     VALUES (@i % 1000, RAND() * 1000);
+
     SET @i += 1;
 END
 
 SELECT 
     'Disk' AS TableType,
     DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
+GO
+```
 
--- Minnesoptimerad
-SET @start = SYSDATETIME();
-SET @i = 1;
+---
 
+## Memory-optimized table
+
+```sql
+DECLARE @start DATETIME2 = SYSDATETIME();
+
+DECLARE @i INT = 1;
 WHILE @i <= 100000
 BEGIN
     INSERT INTO dbo.InMemoryOrders (CustomerID, Amount)
     VALUES (@i % 1000, RAND() * 1000);
+
     SET @i += 1;
 END
 
 SELECT 
     'In-Memory' AS TableType,
     DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
+GO
+```
 
+---
 
-5. Ännu bättre – använd en natively compiled stored procedure
-Det är här In-Memory OLTP verkligen lyser:
+## ❓ Questions
 
-CREATE PROCEDURE dbo.usp_InsertInMemory
+* Which insert was faster?
+* Was the difference significant?
+
+---
+
+# 🧪 Step 4: Measure DELETE Performance
+
+Now compare how fast you can remove all rows.
+
+---
+
+## Disk-based table
+
+```sql
+DECLARE @start DATETIME2 = SYSDATETIME();
+
+DELETE FROM dbo.DiskBasedOrders;
+
+SELECT 
+    'Disk DELETE' AS Operation,
+    DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
+GO
+```
+
+---
+
+## Memory-optimized table
+
+```sql
+DECLARE @start DATETIME2 = SYSDATETIME();
+
+DELETE FROM dbo.InMemoryOrders;
+
+SELECT 
+    'In-Memory DELETE' AS Operation,
+    DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
+GO
+```
+
+---
+
+## ❓ Questions
+
+* Which delete was faster?
+* Was the difference larger or smaller than for inserts?
+
+---
+
+# 🧪 Step 5: Repeat the Test
+
+Run the INSERT test again after deleting all rows.
+
+## ❓ Questions
+
+* Do you get the same results?
+* Why might results vary?
+
+---
+
+# ⭐ Extra: Native Compiled Procedure
+
+## Create procedure
+
+```sql
+CREATE OR ALTER PROCEDURE dbo.usp_InsertInMemory
     @Iterations INT
 WITH NATIVE_COMPILATION, SCHEMABINDING
 AS
 BEGIN ATOMIC WITH (
     TRANSACTION ISOLATION LEVEL = SNAPSHOT,
-    LANGUAGE = N'Swedish'
+    LANGUAGE = N'us_english'
 )
     DECLARE @i INT = 1;
+
     WHILE @i <= @Iterations
     BEGIN
         INSERT INTO dbo.InMemoryOrders (CustomerID, Amount)
         VALUES (@i % 1000, CAST(RAND() * 1000 AS DECIMAL(10,2)));
+
         SET @i += 1;
     END
 END;
+GO
+```
 
--- Kör och mät
+---
+
+## Run and measure
+
+```sql
 DECLARE @start DATETIME2 = SYSDATETIME();
+
 EXEC dbo.usp_InsertInMemory @Iterations = 100000;
-SELECT DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS NativeCompiledMS;
+
+SELECT 
+    'Native Compiled' AS Operation,
+    DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
+GO
+```
+
+---
+
+## ❓ Questions
+
+* Is the native compiled procedure faster?
+* Why might it be faster?
+* Why is this not always used?
+
+---
+
+# 📝 Summary
+
+* Memory-optimized tables are not always faster
+* Inserts may be slightly faster (or similar)
+* Deletes may or may not differ significantly
+* Native compiled procedures can improve performance further
+
+---
+
+# 💡 Key Insight
+
+> In-Memory OLTP is designed for high-concurrency workloads — not just simple single-user tests.
+
+```
+
+---
+
+# 🎯 Vad som förbättrades
+
+- ✔ Enhetlig stil  
+- ✔ Tydliga steg  
+- ✔ Inga “svenska hopp mitt i”  
+- ✔ Delete-test tillagt (bra idé!)  
+- ✔ Stabil kod (inga variabler som lever kvar mellan batcher)  
+- ✔ Pedagogiska frågor  
+
+---
+
+Vill du kan jag också:
+- lägga till en **concurrency-del som verkligen visar skillnad**
+- eller göra en **instruktörsversion med facit / förväntade resultat** 👍
+```
