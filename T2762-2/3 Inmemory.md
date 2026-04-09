@@ -74,220 +74,97 @@ GO
 
 ---
 
-### Step 3: Verify setup
+1. Skapa testmiljön
 
-```sql
-SELECT name, type_desc
-FROM sys.filegroups;
-GO
-```
+-- Aktivera In-Memory OLTP på databasen
+ALTER DATABASE YourDB 
+ADD FILEGROUP imoltp_fg CONTAINS MEMORY_OPTIMIZED_DATA;
 
-You should see a filegroup with:
-
-* `MEMORY_OPTIMIZED_DATA_FILEGROUP`
-
----
+ALTER DATABASE YourDB 
+ADD FILE (NAME='imoltp', FILENAME='C:\Data\imoltp') 
+TO FILEGROUP imoltp_fg;
 
 
+2. Skapa en diskbaserad tabell
 
-
-
-
----
-
-# 🧪 Step 1: Create the Tables
-
-## Disk-based table
-
-```sql
-DROP TABLE IF EXISTS dbo.TestDisk;
-GO
-
-CREATE TABLE dbo.TestDisk
-(
-    ID INT IDENTITY(1,1) PRIMARY KEY,
-    Value BIGINT
+CREATE TABLE dbo.DiskBasedOrders (
+    OrderID   INT IDENTITY PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    Amount    DECIMAL(10,2) NOT NULL,
+    OrderDate DATETIME2 NOT NULL DEFAULT SYSDATETIME()
 );
-GO
-GO
-````
 
----
 
-## Memory-optimized table
+3. Skapa en minnesoptimerad tabell (samma struktur)
 
-```sql
-DROP TABLE IF EXISTS dbo.TestInMem;
-GO
+CREATE TABLE dbo.InMemoryOrders (
+    OrderID    INT IDENTITY NOT NULL,
+    CustomerID INT NOT NULL,
+    Amount     DECIMAL(10,2) NOT NULL,
+    OrderDate  DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
 
-CREATE TABLE dbo.TestInMem
-(
-    ID INT IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
-    Value BIGINT
+    CONSTRAINT PK_InMemoryOrders PRIMARY KEY NONCLUSTERED (OrderID)
 )
-WITH (MEMORY_OPTIMIZED = ON, DURABILITY = SCHEMA_AND_DATA);
-GO
-```
+WITH (
+    MEMORY_OPTIMIZED = ON,
+    DURABILITY = SCHEMA_AND_DATA  -- eller SCHEMA_ONLY för max hastighet
+);
 
----
 
-# 🧪 Step 2: Insert Data
+4. Mät INSERT-prestanda
 
-Turn on timing:
+-- Diskbaserad
+DECLARE @start DATETIME2 = SYSDATETIME();
 
-```sql
-SET STATISTICS TIME ON;
-GO
-```
+DECLARE @i INT = 1;
+WHILE @i <= 100000
+BEGIN
+    INSERT INTO dbo.DiskBasedOrders (CustomerID, Amount)
+    VALUES (@i % 1000, RAND() * 1000);
+    SET @i += 1;
+END
 
----
+SELECT 
+    'Disk' AS TableType,
+    DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
 
-## Insert into disk table
+-- Minnesoptimerad
+SET @start = SYSDATETIME();
+SET @i = 1;
 
-```sql
-INSERT INTO dbo.TestDisk (Value)
-SELECT TOP (50000)
-    ROW_NUMBER() OVER (ORDER BY (SELECT NULL))
-FROM sys.all_objects a
-CROSS JOIN sys.all_objects b;
-GO
-```
+WHILE @i <= 100000
+BEGIN
+    INSERT INTO dbo.InMemoryOrders (CustomerID, Amount)
+    VALUES (@i % 1000, RAND() * 1000);
+    SET @i += 1;
+END
 
----
+SELECT 
+    'In-Memory' AS TableType,
+    DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS ElapsedMS;
 
-## Insert into memory-optimized table
 
-```sql
-INSERT INTO dbo.TestInMem (Value)
-SELECT TOP (50000)
-    ROW_NUMBER() OVER (ORDER BY (SELECT NULL))
-FROM sys.all_objects a
-CROSS JOIN sys.all_objects b;
-GO
-```
+5. Ännu bättre – använd en natively compiled stored procedure
+Det är här In-Memory OLTP verkligen lyser:
 
----
-
-## ❓ Questions
-
-* Which insert was faster?
-* Was the difference large or small?
-
----
-
-# 🧪 Step 3: Read Data
-
-## Disk-based table
-
-```sql
-SELECT SUM(Value)
-FROM dbo.TestDisk;
-GO
-```
-
----
-
-## Memory-optimized table
-
-```sql
-SELECT SUM(Value)
-FROM dbo.TestInMem;
-GO
-```
-
----
-
-## ❓ Questions
-
-* Which query was faster?
-* Was the difference noticeable?
-
----
-
-# 🧪 Step 4: Point Lookup
-
-## Disk-based table
-
-```sql
-SELECT *
-FROM dbo.TestDisk
-WHERE ID = 25000;
-GO
-```
-
----
-
-## Memory-optimized table
-
-```sql
-SELECT *
-FROM dbo.TestInMem
-WHERE ID = 25000;
-GO
-```
-
----
-
-## ❓ Questions
-
-* Were both queries fast?
-* Any visible difference?
-
----
-
-# ⭐ Extra: Native Compiled Procedure
-
-## Step 1: Create procedure
-
-```sql
-CREATE OR ALTER PROCEDURE dbo.usp_InsertInMem
-    @Value INT
+CREATE PROCEDURE dbo.usp_InsertInMemory
+    @Iterations INT
 WITH NATIVE_COMPILATION, SCHEMABINDING
 AS
-BEGIN ATOMIC WITH
-(
+BEGIN ATOMIC WITH (
     TRANSACTION ISOLATION LEVEL = SNAPSHOT,
-    LANGUAGE = N'us_english'
+    LANGUAGE = N'Swedish'
 )
-    INSERT INTO dbo.TestInMem (Value)
-    VALUES (@Value);
+    DECLARE @i INT = 1;
+    WHILE @i <= @Iterations
+    BEGIN
+        INSERT INTO dbo.InMemoryOrders (CustomerID, Amount)
+        VALUES (@i % 1000, CAST(RAND() * 1000 AS DECIMAL(10,2)));
+        SET @i += 1;
+    END
 END;
-GO
-```
 
----
-
-## Step 2: Test it
-
-```sql
-EXEC dbo.usp_InsertInMem @Value = 100;
-GO
-```
-
----
-
-## ❓ Questions
-
-* Why might this be faster than normal procedures?
-* When would this be useful?
-
----
-
-# 📝 Summary
-
-* Memory-optimized tables can improve performance
-* Inserts are often faster
-* Reads may or may not be faster
-* Native compiled procedures can improve performance further
-
----
-
-# 💡 Key Idea
-
-> Use memory-optimized tables when you have performance problems – not by default.
-
-```
-
----
-
-
+-- Kör och mät
+DECLARE @start DATETIME2 = SYSDATETIME();
+EXEC dbo.usp_InsertInMemory @Iterations = 100000;
+SELECT DATEDIFF(MILLISECOND, @start, SYSDATETIME()) AS NativeCompiledMS;
