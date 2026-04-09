@@ -257,6 +257,8 @@ UPDATE DeadlockTest SET Value = 'B2' WHERE ID = 1;
 COMMIT;
 ```
 
+**In the lower part of the live data window, click Deadlock**
+
 ---
 
 ## ✅ What to look for
