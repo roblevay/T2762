@@ -122,15 +122,15 @@ GO
 
 ```sql
 INSERT INTO Documents (Id, FileName, FileData)
-SELECT NEWID(), 'file1.pdf', *
+SELECT NEWID(), 'dictionary.pdf', *
 FROM OPENROWSET(BULK 'C:\Pdfs\dictionary.pdf', SINGLE_BLOB) AS x;
 
 INSERT INTO Documents (Id, FileName, FileData)
-SELECT NEWID(), 'file2.pdf', *
+SELECT NEWID(), 'invoicesample.pdf', *
 FROM OPENROWSET(BULK 'C:\Pdfs\invoicesample.pdf', SINGLE_BLOB) AS x;
 
 INSERT INTO Documents (Id, FileName, FileData)
-SELECT NEWID(), 'file3.pdf', *
+SELECT NEWID(), 'somatosensory.pdf, *
 FROM OPENROWSET(BULK 'C:\Pdfs\somatosensory.pdf', SINGLE_BLOB) AS x;
 ```
 
