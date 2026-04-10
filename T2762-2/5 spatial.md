@@ -162,20 +162,7 @@ You have learned:
 
 ---
 
-# 👨‍🏫 Instructor Notes
 
-Keep this very simple.
-
-Key message:
-👉 "SQL Server can understand geography"
-
-Do NOT go into:
-
-* geometry vs geography (yet)
-* SRIDs in detail
-* indexing
-
-That can come later.
 
 Goal:
 👉 curiosity, not completeness
