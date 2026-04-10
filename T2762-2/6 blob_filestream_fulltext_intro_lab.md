@@ -151,52 +151,8 @@ When working with BLOB data, think about these questions:
 
 ---
 
-# Part 6 – What is FILESTREAM?
 
-**FILESTREAM** is a SQL Server feature for storing large binary files in the file system, while still managing them through SQL Server.
-
-### In simple words
-It is a bridge between:
-- the database
-- the Windows file system
-
-### Why use it?
-Because storing very large files directly in normal table columns is not always the best choice.
-
-### Important
-In this lab, we only learn the idea.
-A real FILESTREAM setup usually requires:
-- SQL Server configuration
-- a FILESTREAM filegroup
-- special table design
-
----
-
-# Part 7 – A very simple FILESTREAM table example
-
-This is what a FILESTREAM table can look like:
-
-```sql
-CREATE TABLE ProductFiles
-(
-    FileID uniqueidentifier ROWGUIDCOL NOT NULL UNIQUE,
-    ProductID int,
-    FileName nvarchar(200),
-    FileData varbinary(max) FILESTREAM
-);
-```
-
-### Note
-You do **not** need to run this unless FILESTREAM is enabled in your environment.
-
-### Focus on the concept
-- `varbinary(max)` stores binary data
-- `FILESTREAM` tells SQL Server to store it in the file system
-- SQL Server still controls access and consistency
-
----
-
-# Part 8 – Full-text search: the basic idea
+# Part 6 – Full-text search: the basic idea
 
 Sometimes it is not enough to search by file name.
 
@@ -209,7 +165,7 @@ This is where **Full-Text Search** is useful.
 
 ---
 
-# Part 9 – Create a simple text-based example
+# Part 7 – Create a simple text-based example
 
 To keep things very easy, let us use product descriptions instead of real files.
 
@@ -263,7 +219,7 @@ FROM ProductNotes;
 
 ---
 
-# Part 10 – Create a full-text catalog
+# Part 8 – Create a full-text catalog
 
 ```sql
 CREATE FULLTEXT CATALOG ftCatalog AS DEFAULT;
@@ -271,7 +227,7 @@ CREATE FULLTEXT CATALOG ftCatalog AS DEFAULT;
 
 ---
 
-# Part 11 – Create a full-text index
+# Part 9 – Create a full-text index
 
 Before you do this, the table needs a unique key.
 
@@ -292,7 +248,7 @@ WITH CHANGE_TRACKING AUTO;
 
 ---
 
-# Part 12 – Search using FREETEXT
+# Part 10 – Search using FREETEXT
 
 Now try a simple search:
 
@@ -307,7 +263,7 @@ It searches for rows related to the meaning of the word, not only exact matches.
 
 ---
 
-# Part 13 – Search using CONTAINSTABLE
+# Part 11 – Search using CONTAINSTABLE
 
 This gives ranking information.
 
