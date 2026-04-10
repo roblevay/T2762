@@ -19,7 +19,7 @@ You will:
 
 # 📥 Step 1 – Download PDF files
 
-Download the three pdf files from  **https://raw.githubusercontent.com/roblevay/t2762/main/pdfs** to the local folder **c:\data**
+Download the three pdf files from  **https://github.com/roblevay/T2762/tree/main/pdfs** to the local folder **c:\data**
 ✅ Verify:
 
 * Go to `C:\data`
