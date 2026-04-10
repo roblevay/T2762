@@ -130,7 +130,7 @@ SELECT NEWID(), 'invoicesample.pdf', *
 FROM OPENROWSET(BULK 'C:\Pdfs\invoicesample.pdf', SINGLE_BLOB) AS x;
 
 INSERT INTO Documents (Id, FileName, FileData)
-SELECT NEWID(), 'somatosensory.pdf, *
+SELECT NEWID(), 'somatosensory.pdf', *
 FROM OPENROWSET(BULK 'C:\Pdfs\somatosensory.pdf', SINGLE_BLOB) AS x;
 ```
 
@@ -158,25 +158,7 @@ FROM Documents;
 
 ---
 
-# 📁 Step 7 – Access via Windows Explorer
 
-Open Explorer and go to:
-
-```
-\\localhost\FilestreamShare
-```
-
-You will see:
-
-* Database folder
-* Internal FILESTREAM structure
-
-⚠️ Important:
-
-* Do NOT edit files manually here
-* SQL Server controls consistency
-
----
 
 # 🧠 What You Learned
 
@@ -186,20 +168,7 @@ You will see:
 
   * Insert via SQL
   * Read via SQL
-  * See them via Windows
+
 
 ---
 
-# 🚀 Optional Exercise
-
-Try:
-
-* Insert a larger file
-* Delete a row → see what happens in filesystem
-* Backup and restore database
-
----
-
-# ✅ Lab Complete
-
-You now understand the basics of FILESTREAM in SQL Server.
