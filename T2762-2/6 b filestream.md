@@ -13,7 +13,7 @@ You will:
 3. Create a FILESTREAM database
 4. Insert files into SQL Server
 5. Read files from SQL
-6. View FILESTREAM data in Windows Explorer
+
 
 
 
