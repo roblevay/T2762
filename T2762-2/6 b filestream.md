@@ -19,10 +19,12 @@ You will:
 
 # 📥 Step 1 – Download PDF files
 
-Download the three pdf files from  **https://github.com/roblevay/T2762/tree/main/pdfs** to the local folder **c:\data**
+Create a local folder called **C:\Pdfs**
+
+Download the three pdf files from  **https://github.com/roblevay/T2762/tree/main/pdfs** to the local folder **C:\Pdfs**
 ✅ Verify:
 
-* Go to `C:\data`
+* Go to `C:Pdfs`
 * Confirm that 3 PDF files exist
 
 ---
@@ -78,24 +80,24 @@ CREATE DATABASE FileStreamDB
 ON PRIMARY
 (
     NAME = FSDB_Data,
-    FILENAME = 'C:\data\FSDB_Data.mdf'
+    FILENAME = 'C:Pdfs\FSDB_Data.mdf'
 ),
 FILEGROUP FSGroup CONTAINS FILESTREAM
 (
     NAME = FSDB_FS,
-    FILENAME = 'C:\data\FSData'
+    FILENAME = 'C:Pdfs\FSData'
 )
 LOG ON
 (
     NAME = FSDB_Log,
-    FILENAME = 'C:\data\FSDB_Log.ldf'
+    FILENAME = 'C:Pdfs\FSDB_Log.ldf'
 );
 GO
 ```
 
 ✅ Verify:
 
-* A new folder `C:\data\FSData` should be created
+* A new folder `C:Pdfs\FSData` should be created
 
 ---
 
@@ -121,15 +123,15 @@ GO
 ```sql
 INSERT INTO Documents (Id, FileName, FileData)
 SELECT NEWID(), 'file1.pdf', *
-FROM OPENROWSET(BULK 'C:\data\file1.pdf', SINGLE_BLOB) AS x;
+FROM OPENROWSET(BULK 'C:Pdfs\file1.pdf', SINGLE_BLOB) AS x;
 
 INSERT INTO Documents (Id, FileName, FileData)
 SELECT NEWID(), 'file2.pdf', *
-FROM OPENROWSET(BULK 'C:\data\file2.pdf', SINGLE_BLOB) AS x;
+FROM OPENROWSET(BULK 'C:Pdfs\file2.pdf', SINGLE_BLOB) AS x;
 
 INSERT INTO Documents (Id, FileName, FileData)
 SELECT NEWID(), 'file3.pdf', *
-FROM OPENROWSET(BULK 'C:\data\file3.pdf', SINGLE_BLOB) AS x;
+FROM OPENROWSET(BULK 'C:Pdfs\file3.pdf', SINGLE_BLOB) AS x;
 ```
 
 ✅ Verify:
