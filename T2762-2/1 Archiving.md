@@ -204,6 +204,29 @@ ALTER PARTITION FUNCTION pfOrders()
 MERGE RANGE ('2024-01-01');
 ```
 
+
+## Check the data
+
+```sql
+SELECT 
+    p.partition_number,
+    p.rows,
+    prv.value AS BoundaryValue
+FROM sys.partitions p
+JOIN sys.indexes i
+    ON p.object_id = i.object_id
+    AND p.index_id = i.index_id
+LEFT JOIN sys.partition_schemes ps
+    ON ps.data_space_id = i.data_space_id
+LEFT JOIN sys.partition_functions pf
+    ON pf.function_id = ps.function_id
+LEFT JOIN sys.partition_range_values prv
+    ON prv.function_id = pf.function_id
+    AND prv.boundary_id = p.partition_number
+WHERE p.object_id = OBJECT_ID('dbo.orders')
+    AND p.index_id IN (0,1)
+ORDER BY p.partition_number;
+```
 ---
 
 # ✅ What just happened?
