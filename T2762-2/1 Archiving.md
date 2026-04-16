@@ -117,10 +117,10 @@ CREATE TABLE Orders_Archive
 
 # 🧪 Step 4: Archive Old Data (Traditional Way ❌)
 
-```sql
+Dont't do this!
 DELETE FROM Orders
 WHERE OrderDate < '2024-01-01';
-```
+
 
 ---
 
