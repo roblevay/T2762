@@ -12,7 +12,24 @@ In this lab, you will:
 
 # Example 1 – Orders from an API
 
-## Step 1 – Incoming JSON
+
+## Step 1 – Create table
+
+```sql
+CREATE TABLE Orders (
+    OrderID int,
+    Customer nvarchar(100),
+    Total int
+);
+```
+
+## Step 2 – Store JSON in a variable
+
+```sql
+DECLARE @json nvarchar(max) = N'[...]'; -- paste JSON here
+```
+
+## Step 3 – Incoming JSON
 
 ```json
 [
@@ -29,25 +46,6 @@ In this lab, you will:
 ]
 ```
 
----
-
-## Step 2 – Store JSON in a variable
-
-```sql
-DECLARE @json nvarchar(max) = N'[...]'; -- paste JSON here
-```
-
----
-
-## Step 3 – Create table
-
-```sql
-CREATE TABLE Orders (
-    OrderID int,
-    Customer nvarchar(100),
-    Total int
-);
-```
 
 ---
 
