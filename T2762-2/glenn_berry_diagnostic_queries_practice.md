@@ -100,14 +100,4 @@ A strong answer also comments on whether the latency looks acceptable, borderlin
 
 ---
 
-## Teaching note
 
-These tasks work well in a lab because they force students to:
-- navigate both **instance-level** and **database-level** queries
-- interpret results instead of just running scripts
-- connect technical findings to operational conclusions
-
-It is often useful to ask students to include:
-1. the query number they used from Glenn Berry's script
-2. a screenshot or copied result excerpt
-3. a short interpretation in plain English
