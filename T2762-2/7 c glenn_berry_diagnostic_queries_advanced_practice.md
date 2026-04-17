@@ -193,12 +193,4 @@ For each answer, use this format:
 
 ---
 
-## Teaching note
 
-These questions are harder because students must do more than just find a number.  
-They must:
-- choose the relevant Glenn Berry query
-- report the **query number**
-- extract evidence from the result
-- interpret what the evidence means
-- avoid jumping to conclusions from a single DMV
