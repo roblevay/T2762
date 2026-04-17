@@ -10,7 +10,21 @@ In this lab, you will learn how to:
 
 ---
 
-# Part 1 – Incoming XML data
+# Part 1 – Create a table
+
+Now create a relational table to store the product data.
+
+```sql
+CREATE TABLE ProductsXml
+(
+    ProductID int,
+    Name nvarchar(100),
+    Category nvarchar(100),
+    Price int
+);
+```
+
+# Part 2 – Incoming XML data
 
 Imagine that your system receives product data from another system in XML format.
 
@@ -83,7 +97,7 @@ Here is the incoming XML document:
 
 ---
 
-# Part 2 – Store the XML in a variable
+# Part 3 – Store the XML in a variable
 
 Run this code and paste the XML into the variable:
 
@@ -155,19 +169,7 @@ DECLARE @x xml = N'
 
 ---
 
-# Part 3 – Create a table
 
-Now create a relational table to store the product data.
-
-```sql
-CREATE TABLE ProductsXml
-(
-    ProductID int,
-    Name nvarchar(100),
-    Category nvarchar(100),
-    Price int
-);
-```
 
 ---
 
